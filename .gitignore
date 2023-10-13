@@ -9,11 +9,13 @@
 .next
 node_modules
 
+
 # testing
 /coverage
 
 # production
 /dist
+dist
 
 # misc
 .DS_Store

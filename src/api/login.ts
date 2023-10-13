@@ -51,7 +51,7 @@ router.post("/", async (req, res) => {
       { expiresIn: "14d" },
       (err, token) => {
         if (err) throw err;
-        res.status(200).json(token);
+        res.status(200).json({ token });
       }
     );
   } catch (error) {

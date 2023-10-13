@@ -1,30 +1,74 @@
 import express from "express";
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
+import http from "http";
+import { Server } from "socket.io";
 import cors from "cors";
+
+import signup from "./api/signup.js";
+import login from "./api/login.js";
+import chat from "./api/chat.js";
+
+import connectDb from "./utils/connectDb.js";
+import {
+  addUser,
+  findConnectedUser,
+  removeUser,
+} from "./utilsSocketio/roomActions.js";
+import { loadMessages, sendMsg } from "./utilsSocketio/messageActions.js";
 
 const app = express();
 
-// API IMPORTS
-import signup from "./api/signup.js";
-import login from "./api/login.js";
-import connectDb from "./utils/connectDb.js";
+app.use(cors());
+app.use(bodyParser.json());
 
 dotenv.config({ path: "./.env" });
-
 const PORT = process.env.PORT || 3001;
 
 connectDb();
 
-app.use(bodyParser.json());
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(cors());
+io.on("connection", (socket) => {
+  socket.on("join", async ({ userId }) => {
+    console.log("join");
+    const users = await addUser(userId, socket.id);
 
-app.options("*", cors());
+    setInterval(() => {
+      socket.emit("connectedUsers", {
+        users: users.filter((user) => user.userId !== userId),
+      });
+    }, 10000);
+  });
+
+  socket.on("loadMessages", async ({ userId, messagesWith }) => {
+    const { chat, error } = await loadMessages(userId, messagesWith);
+
+    !error
+      ? socket.emit("messagesLoaded", { chat })
+      : socket.emit("noChatFound");
+  });
+
+  socket.on("sendNewMsg", async ({ userId, msgSendToUserId, msg }) => {
+    const { newMsg, error } = await sendMsg(userId, msgSendToUserId, msg);
+    const receiverSocket = findConnectedUser(msgSendToUserId);
+
+    if (receiverSocket) {
+      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+      io.to(receiverSocket.socketId).emit("newMsgReceived", { newMsg });
+    }
+
+    !error && socket.emit("msgSent", { newMsg });
+  });
+
+  socket.on("userDisconnect", () => removeUser(socket.id));
+});
 
 app.use("/api/signup", signup);
 app.use("/api/login", login);
+app.use("/api/chat", chat);
 
-app.listen(PORT, () => {
-  console.log(`Express server running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Express server running on http://localhost:${PORT}`); // Correct the port number in the log message
 });
