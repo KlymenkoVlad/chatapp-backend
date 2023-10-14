@@ -8,6 +8,7 @@ import cors from "cors";
 import signup from "./api/signup.js";
 import login from "./api/login.js";
 import chat from "./api/chat.js";
+import user from "./api/user.js";
 
 import connectDb from "./utils/connectDb.js";
 import {
@@ -68,6 +69,7 @@ io.on("connection", (socket) => {
 app.use("/api/signup", signup);
 app.use("/api/login", login);
 app.use("/api/chat", chat);
+app.use("/api/user", user);
 
 server.listen(PORT, () => {
   console.log(`Express server running on http://localhost:${PORT}`); // Correct the port number in the log message
