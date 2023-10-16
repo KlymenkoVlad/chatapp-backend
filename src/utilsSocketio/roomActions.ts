@@ -7,7 +7,6 @@ export const removeUser = async (socketId) => {
 };
 
 export const addUser = async (userId: string, socketId) => {
-  console.log(users);
   const user = users.find((user) => user.userId === userId);
 
   if (user && user.socketId === socketId) {
@@ -21,6 +20,7 @@ export const addUser = async (userId: string, socketId) => {
 
   users.push(newUser);
 
+  console.log(users);
   return users;
 };
 

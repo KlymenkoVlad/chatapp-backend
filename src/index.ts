@@ -43,6 +43,28 @@ io.on("connection", (socket) => {
     }, 10000);
   });
 
+  // socket.on("typing", (userId) => {
+  //   // Broadcast the 'typing' event to all connected clients except the sender
+  //   console.log("typing");
+  //   socket.broadcast.emit("userTyping", userId);
+  // });
+
+  socket.on("typing", (userId, msgSendToUserId) => {
+    // Use the findConnectedUser function to get the recipient's socket
+    const receiverSocket = findConnectedUser(msgSendToUserId);
+    if (receiverSocket) {
+      // Emit the 'userTyping' event to the specific recipient
+
+      io.to(receiverSocket.socketId).emit("userTyping", userId);
+    }
+  });
+
+  socket.on("stopTyping", () => {
+    // Broadcast the 'stopTyping' event to all connected clients
+    console.log("stopTyping");
+    socket.broadcast.emit("userStoppedTyping");
+  });
+
   socket.on("loadMessages", async ({ userId, messagesWith }) => {
     const { chat, error } = await loadMessages(userId, messagesWith);
 
