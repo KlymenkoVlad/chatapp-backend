@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import compression from "compression";
 
 import signup from "./api/signup.js";
 import login from "./api/login.js";
@@ -17,10 +20,24 @@ import {
   removeUser,
 } from "./utilsSocketio/roomActions.js";
 import { loadMessages, sendMsg } from "./utilsSocketio/messageActions.js";
+import ExpressMongoSanitize from "express-mongo-sanitize";
 
 const app = express();
 
 app.use(cors());
+app.use(helmet());
+
+const limiter = rateLimit({
+  max: 200,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP, please try again in an hour!",
+});
+app.use("/api", limiter);
+
+app.use(ExpressMongoSanitize());
+
+app.use(compression());
+
 app.use(bodyParser.json());
 
 dotenv.config({ path: "./.env" });
