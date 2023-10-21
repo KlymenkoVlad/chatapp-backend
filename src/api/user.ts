@@ -1,10 +1,12 @@
 import express, { Request } from "express";
 const router = express.Router();
-
+import bcrypt from "bcryptjs";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import UserModel from "../models/UserModel.js";
 import { CustomRequest } from "../types/types.js";
+import { validateEmail } from "../utils/validation.js";
 
+//Find all matching users by username
 router.get("/", authMiddleware, async (req: CustomRequest, res) => {
   try {
     const { username } = req.query;
@@ -44,5 +46,112 @@ router.get("/", authMiddleware, async (req: CustomRequest, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+//Get user by id
+router.get("/:userId", async (req: Request, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//Update user profile
+router.put("/", authMiddleware, async (req: CustomRequest, res) => {
+  const { userId } = req;
+  const { name, lastname, email, username, mainPicture } = req.body;
+
+  const updateFields: { [key: string]: string | undefined } = {};
+
+  if (email) {
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: "Invalid Email" });
+    }
+    const emailNotAvailable = await UserModel.findOne({
+      email: email.toLowerCase(),
+    });
+    if (emailNotAvailable) {
+      return res.status(400).json({ error: "This email is already taken" });
+    }
+
+    updateFields.email = email;
+  }
+
+  if (username) {
+    const usernameNotAvailable = await UserModel.findOne({
+      username,
+    });
+    if (usernameNotAvailable) {
+      return res.status(400).json({ error: "This username is already taken" });
+    }
+    updateFields.username = username;
+  }
+
+  if (name && name.length > 1) {
+    updateFields.name = name;
+  }
+
+  if (lastname && lastname.length > 1) {
+    updateFields.lastname = lastname;
+  }
+
+  if (mainPicture) {
+    updateFields.mainPicture = mainPicture;
+  }
+
+  try {
+    const updatedUser = await UserModel.findOneAndUpdate(
+      { _id: userId },
+      { $set: updateFields },
+      { new: true } // This option returns the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error updating user" });
+  }
+});
+
+//Update user password
+router.post(
+  "/updatePassword",
+  authMiddleware,
+  async (req: CustomRequest, res) => {
+    try {
+      const { userId } = req;
+      const { oldPassword, newPassword } = req.body;
+
+      const user = await UserModel.findById(userId).select("+password");
+
+      const isNewPassword = await bcrypt.compare(newPassword, user.password);
+      if (isNewPassword) {
+        return res.status(400).send("Password is the same");
+      }
+
+      const isPassword = await bcrypt.compare(oldPassword, user.password);
+      if (!isPassword) {
+        return res.status(400).send("Invalid password");
+      }
+
+      user.password = await bcrypt.hash(newPassword, 12);
+      await user.save();
+      return res.status(200).send("Updated");
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send("Server error");
+    }
+  }
+);
 
 export default router;

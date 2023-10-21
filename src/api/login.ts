@@ -7,6 +7,7 @@ import { validateEmail } from "../utils/validation.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import { CustomRequest } from "../types/types.js";
 
+//Get user by authorization token
 router.get("/", authMiddleware, async (req: CustomRequest, res) => {
   const { userId } = req;
 
@@ -20,6 +21,7 @@ router.get("/", authMiddleware, async (req: CustomRequest, res) => {
   }
 });
 
+//Login
 router.post("/", async (req, res) => {
   const { email, password } = req.body;
   if (!validateEmail(email)) {

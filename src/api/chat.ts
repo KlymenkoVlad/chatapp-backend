@@ -7,6 +7,7 @@ import express from "express";
 
 const router = express.Router();
 
+//Get all chats
 router.get("/", authMiddleware, async (req: CustomRequest, res) => {
   try {
     const { userId } = req;
@@ -38,6 +39,7 @@ router.get("/", authMiddleware, async (req: CustomRequest, res) => {
   }
 });
 
+//Create chat
 router.post("/", async (req, res) => {
   const { userId, msgSendToUserId } = req.body;
 

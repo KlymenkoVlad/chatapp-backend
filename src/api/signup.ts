@@ -7,6 +7,7 @@ import ChatModel from "../models/ChatModel.js";
 
 const router = express.Router();
 
+//Signup
 router.post("/", async (req, res) => {
   const { username, password, email, name, lastname, mainPicture } = req.body;
   if (!validateEmail(email)) {
