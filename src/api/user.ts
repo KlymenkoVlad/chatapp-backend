@@ -136,12 +136,12 @@ router.post(
 
       const isNewPassword = await bcrypt.compare(newPassword, user.password);
       if (isNewPassword) {
-        return res.status(400).send("Password is the same");
+        return res.status(400).send({ error: "Password is the same" });
       }
 
       const isPassword = await bcrypt.compare(oldPassword, user.password);
       if (!isPassword) {
-        return res.status(400).send("Invalid password");
+        return res.status(400).send({ error: "Invalid password" });
       }
 
       user.password = await bcrypt.hash(newPassword, 12);
@@ -149,7 +149,7 @@ router.post(
       return res.status(200).send("Updated");
     } catch (error) {
       console.error(error);
-      return res.status(500).send("Server error");
+      return res.status(500).json({ error: "Error updating password" });
     }
   }
 );
