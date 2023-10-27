@@ -19,7 +19,12 @@ import {
   findConnectedUser,
   removeUser,
 } from "./utilsSocketio/roomActions.js";
-import { loadMessages, sendMsg } from "./utilsSocketio/messageActions.js";
+import {
+  deleteMsg,
+  editMsg,
+  loadMessages,
+  sendMsg,
+} from "./utilsSocketio/messageActions.js";
 import ExpressMongoSanitize from "express-mongo-sanitize";
 
 const app = express();
@@ -95,6 +100,68 @@ io.on("connection", (socket) => {
 
     !error && socket.emit("msgSent", { newMsg });
   });
+
+  socket.on("deleteMsg", async ({ userId, msgSendToUserId, msgId }) => {
+    const { error, userMessageIndex } = await deleteMsg(
+      userId,
+      msgSendToUserId,
+      msgId
+    );
+    if (error) throw new Error(error);
+
+    const receiverSocket = findConnectedUser(msgSendToUserId);
+    const senderSocket = findConnectedUser(userId);
+
+    console.log(msgSendToUserId, userId);
+    console.log("warn", receiverSocket, senderSocket);
+
+    if (receiverSocket) {
+      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+      io.to(receiverSocket.socketId).emit("msgDeletedReceived", {
+        userMessageIndex,
+      });
+    }
+    if (senderSocket) {
+      io.to(senderSocket.socketId).emit("msgDeletedReceived", {
+        userMessageIndex,
+      });
+    }
+  });
+
+  socket.on(
+    "editMsg",
+    async ({ userId, msgSendToUserId, msgId, newMsgText }) => {
+      const { error, userMessageIndex } = await editMsg(
+        userId,
+        msgSendToUserId,
+        msgId,
+        newMsgText
+      );
+      if (error) throw new Error(error);
+
+      const receiverSocket = findConnectedUser(msgSendToUserId);
+      const senderSocket = findConnectedUser(userId);
+
+      console.log(msgSendToUserId, userId);
+      console.log("warn", receiverSocket, senderSocket);
+
+      if (receiverSocket) {
+        // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+        io.to(receiverSocket.socketId).emit("msgEditedReceived", {
+          userMessageIndex,
+          msgId,
+          newMsgText,
+        });
+      }
+      if (senderSocket) {
+        io.to(senderSocket.socketId).emit("msgEditedReceived", {
+          userMessageIndex,
+          msgId,
+          newMsgText,
+        });
+      }
+    }
+  );
 
   socket.on("userDisconnect", () => removeUser(socket.id));
 });
