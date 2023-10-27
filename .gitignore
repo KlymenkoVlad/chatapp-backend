@@ -8,6 +8,7 @@
 .env
 .next
 node_modules
+nodemodules 
 
 
 # testing
