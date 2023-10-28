@@ -16,7 +16,11 @@ import { addUser, findConnectedUser, removeUser, } from "./utilsSocketio/roomAct
 import { deleteMsg, editMsg, loadMessages, sendMsg, } from "./utilsSocketio/messageActions.js";
 import ExpressMongoSanitize from "express-mongo-sanitize";
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    methods: "*",
+}));
+app.use(helmet());
 app.use(helmet());
 const limiter = rateLimit({
     max: 500,
@@ -31,7 +35,13 @@ dotenv.config({ path: "./.env" });
 const PORT = process.env.PORT || 3001;
 connectDb();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        allowedHeaders: "*",
+        credentials: true,
+    },
+});
 io.on("connection", (socket) => {
     socket.on("join", async ({ userId }) => {
         console.log("join");
