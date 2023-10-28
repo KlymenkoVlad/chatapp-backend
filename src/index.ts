@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import compression from "compression";
 
 import signup from "./api/signup.js";
 import login from "./api/login.js";
@@ -16,11 +19,30 @@ import {
   findConnectedUser,
   removeUser,
 } from "./utilsSocketio/roomActions.js";
-import { loadMessages, sendMsg } from "./utilsSocketio/messageActions.js";
+import {
+  deleteMsg,
+  editMsg,
+  loadMessages,
+  sendMsg,
+} from "./utilsSocketio/messageActions.js";
+import ExpressMongoSanitize from "express-mongo-sanitize";
 
 const app = express();
 
 app.use(cors());
+app.use(helmet());
+
+const limiter = rateLimit({
+  max: 500,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many requests from this IP, please try again in an hour!",
+});
+app.use("/api", limiter);
+
+app.use(ExpressMongoSanitize());
+
+app.use(compression());
+
 app.use(bodyParser.json());
 
 dotenv.config({ path: "./.env" });
@@ -43,6 +65,22 @@ io.on("connection", (socket) => {
     }, 10000);
   });
 
+  socket.on("typing", (userId, msgSendToUserId) => {
+    // Use the findConnectedUser function to get the recipient's socket
+    const receiverSocket = findConnectedUser(msgSendToUserId);
+    if (receiverSocket) {
+      // Emit the 'userTyping' event to the specific recipient
+
+      io.to(receiverSocket.socketId).emit("userTyping", userId);
+    }
+  });
+
+  socket.on("stopTyping", () => {
+    // Broadcast the 'stopTyping' event to all connected clients
+    console.log("stopTyping");
+    socket.broadcast.emit("userStoppedTyping");
+  });
+
   socket.on("loadMessages", async ({ userId, messagesWith }) => {
     const { chat, error } = await loadMessages(userId, messagesWith);
 
@@ -63,7 +101,73 @@ io.on("connection", (socket) => {
     !error && socket.emit("msgSent", { newMsg });
   });
 
+  socket.on("deleteMsg", async ({ userId, msgSendToUserId, msgId }) => {
+    const { error, userMessageIndex } = await deleteMsg(
+      userId,
+      msgSendToUserId,
+      msgId
+    );
+    if (error) throw new Error(error);
+
+    const receiverSocket = findConnectedUser(msgSendToUserId);
+    const senderSocket = findConnectedUser(userId);
+
+    console.log(msgSendToUserId, userId);
+    console.log("warn", receiverSocket, senderSocket);
+
+    if (receiverSocket) {
+      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+      io.to(receiverSocket.socketId).emit("msgDeletedReceived", {
+        userMessageIndex,
+      });
+    }
+    if (senderSocket) {
+      io.to(senderSocket.socketId).emit("msgDeletedReceived", {
+        userMessageIndex,
+      });
+    }
+  });
+
+  socket.on(
+    "editMsg",
+    async ({ userId, msgSendToUserId, msgId, newMsgText }) => {
+      const { error, userMessageIndex } = await editMsg(
+        userId,
+        msgSendToUserId,
+        msgId,
+        newMsgText
+      );
+      if (error) throw new Error(error);
+
+      const receiverSocket = findConnectedUser(msgSendToUserId);
+      const senderSocket = findConnectedUser(userId);
+
+      console.log(msgSendToUserId, userId);
+      console.log("warn", receiverSocket, senderSocket);
+
+      if (receiverSocket) {
+        // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+        io.to(receiverSocket.socketId).emit("msgEditedReceived", {
+          userMessageIndex,
+          msgId,
+          newMsgText,
+        });
+      }
+      if (senderSocket) {
+        io.to(senderSocket.socketId).emit("msgEditedReceived", {
+          userMessageIndex,
+          msgId,
+          newMsgText,
+        });
+      }
+    }
+  );
+
   socket.on("userDisconnect", () => removeUser(socket.id));
+});
+
+app.get("/", (req, res) => {
+  res.send("Welcome to the root path!");
 });
 
 app.use("/api/signup", signup);
