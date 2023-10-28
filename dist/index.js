@@ -116,6 +116,9 @@ io.on("connection", (socket) => {
     });
     socket.on("userDisconnect", () => removeUser(socket.id));
 });
+app.get("/", (req, res) => {
+    res.send("Welcome to the root path!");
+});
 app.use("/api/signup", signup);
 app.use("/api/login", login);
 app.use("/api/chat", chat);
