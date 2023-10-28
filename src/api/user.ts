@@ -7,7 +7,7 @@ import { CustomRequest } from "../types/types.js";
 import { validateEmail } from "../utils/validation.js";
 
 //Find all matching users by username
-router.get("/", authMiddleware, async (req: CustomRequest, res) => {
+router.get("/", authMiddleware, async (req: CustomRequest, res: any) => {
   try {
     const { username } = req.query;
     const { userId } = req;

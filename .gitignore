@@ -8,14 +8,15 @@
 .env
 .next
 node_modules
+nodemodules 
 
 
 # testing
 /coverage
 
 # production
-/dist
-dist
+
+
 
 # misc
 .DS_Store
