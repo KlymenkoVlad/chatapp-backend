@@ -48,7 +48,7 @@ router.get("/", authMiddleware, async (req: CustomRequest, res: any) => {
 });
 
 //Get user by id
-router.get("/:userId", async (req: Request, res) => {
+router.get("/:userId", authMiddleware, async (req: Request, res) => {
   try {
     const { userId } = req.params;
     const user = await UserModel.findById(userId);
