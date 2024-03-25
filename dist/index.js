@@ -13,7 +13,7 @@ import chat from "./api/chat.js";
 import user from "./api/user.js";
 import connectDb from "./utils/connectDb.js";
 import { addUser, findConnectedUser, removeUser, } from "./utilsSocketio/roomActions.js";
-import { deleteMsg, editMsg, loadMessages, sendMsg, } from "./utilsSocketio/messageActions.js";
+import { deleteMsg, editMsg, loadMessages, sendMsg, startTalk, } from "./utilsSocketio/messageActions.js";
 import ExpressMongoSanitize from "express-mongo-sanitize";
 const app = express();
 app.use(cors({
@@ -62,7 +62,7 @@ io.on("connection", (socket) => {
     });
     socket.on("stopTyping", () => {
         // Broadcast the 'stopTyping' event to all connected clients
-        console.log("stopTyping");
+        // console.log("stopTyping");
         socket.broadcast.emit("userStoppedTyping");
     });
     socket.on("loadMessages", async ({ userId, messagesWith }) => {
@@ -86,8 +86,8 @@ io.on("connection", (socket) => {
             throw new Error(error);
         const receiverSocket = findConnectedUser(msgSendToUserId);
         const senderSocket = findConnectedUser(userId);
-        console.log(msgSendToUserId, userId);
-        console.log("warn", receiverSocket, senderSocket);
+        // console.log(msgSendToUserId, userId);
+        // console.log("warn", receiverSocket, senderSocket);
         if (receiverSocket) {
             // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
             io.to(receiverSocket.socketId).emit("msgDeletedReceived", {
@@ -100,14 +100,28 @@ io.on("connection", (socket) => {
             });
         }
     });
+    socket.on("start-talk", async ({ userIdReceiver, userId }) => {
+        // console.log(data.messagesWith, "data");
+        // console.log(data, "data");
+        const receiverSocket = findConnectedUser(userIdReceiver);
+        const { error, data } = await startTalk(userId);
+        console.log(data);
+        console.log("start-talk");
+        // console.log(receiverSocket.socketId);
+        if (receiverSocket) {
+            console.log("all good");
+            // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+            io.to(receiverSocket.socketId).emit("newChatAccept", data);
+        }
+    });
     socket.on("editMsg", async ({ userId, msgSendToUserId, msgId, newMsgText }) => {
         const { error, userMessageIndex } = await editMsg(userId, msgSendToUserId, msgId, newMsgText);
         if (error)
             throw new Error(error);
         const receiverSocket = findConnectedUser(msgSendToUserId);
         const senderSocket = findConnectedUser(userId);
-        console.log(msgSendToUserId, userId);
-        console.log("warn", receiverSocket, senderSocket);
+        // console.log(msgSendToUserId, userId);
+        // console.log("warn", receiverSocket, senderSocket);
         if (receiverSocket) {
             // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
             io.to(receiverSocket.socketId).emit("msgEditedReceived", {

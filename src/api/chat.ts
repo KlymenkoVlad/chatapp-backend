@@ -95,7 +95,7 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 
     if (previousChat) {
-      return res.status(200).json({ message: "Ok" });
+      return res.status(200).json({ message: "Chat already exists" });
     }
     const userData = await UserModel.findById(msgSendToUserId);
 
@@ -104,7 +104,7 @@ router.post("/", authMiddleware, async (req, res) => {
       user: userData,
     };
 
-    return res.status(200).json(ChatObj);
+    return res.status(201).json(ChatObj);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal server error" });

@@ -47,14 +47,14 @@ router.post("/", authMiddleware, async (req, res) => {
             await msgSendToUser.save();
         }
         if (previousChat) {
-            return res.status(200).json({ message: "Ok" });
+            return res.status(200).json({ message: "Chat already exists" });
         }
         const userData = await UserModel.findById(msgSendToUserId);
         const ChatObj = {
             messagesWith: msgSendToUserId,
             user: userData,
         };
-        return res.status(200).json(ChatObj);
+        return res.status(201).json(ChatObj);
     }
     catch (error) {
         console.error(error);
