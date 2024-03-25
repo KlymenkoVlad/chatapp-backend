@@ -24,6 +24,7 @@ import {
   editMsg,
   loadMessages,
   sendMsg,
+  startTalk,
 } from "./utilsSocketio/messageActions.js";
 import ExpressMongoSanitize from "express-mongo-sanitize";
 
@@ -90,7 +91,7 @@ io.on("connection", (socket) => {
 
   socket.on("stopTyping", () => {
     // Broadcast the 'stopTyping' event to all connected clients
-    console.log("stopTyping");
+    // console.log("stopTyping");
     socket.broadcast.emit("userStoppedTyping");
   });
 
@@ -125,8 +126,8 @@ io.on("connection", (socket) => {
     const receiverSocket = findConnectedUser(msgSendToUserId);
     const senderSocket = findConnectedUser(userId);
 
-    console.log(msgSendToUserId, userId);
-    console.log("warn", receiverSocket, senderSocket);
+    // console.log(msgSendToUserId, userId);
+    // console.log("warn", receiverSocket, senderSocket);
 
     if (receiverSocket) {
       // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
@@ -138,6 +139,25 @@ io.on("connection", (socket) => {
       io.to(senderSocket.socketId).emit("msgDeletedReceived", {
         userMessageIndex,
       });
+    }
+  });
+
+  socket.on("start-talk", async ({ userIdReceiver, userId }) => {
+    // console.log(data.messagesWith, "data");
+    // console.log(data, "data");
+
+    const receiverSocket = findConnectedUser(userIdReceiver);
+
+    const { error, data } = await startTalk(userId);
+    console.log(data);
+
+    console.log("start-talk");
+    // console.log(receiverSocket.socketId);
+    if (receiverSocket) {
+      console.log("all good");
+
+      // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+      io.to(receiverSocket.socketId).emit("newChatAccept", data);
     }
   });
 
@@ -155,8 +175,8 @@ io.on("connection", (socket) => {
       const receiverSocket = findConnectedUser(msgSendToUserId);
       const senderSocket = findConnectedUser(userId);
 
-      console.log(msgSendToUserId, userId);
-      console.log("warn", receiverSocket, senderSocket);
+      // console.log(msgSendToUserId, userId);
+      // console.log("warn", receiverSocket, senderSocket);
 
       if (receiverSocket) {
         // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET

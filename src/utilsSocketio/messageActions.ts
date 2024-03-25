@@ -48,6 +48,32 @@ export const sendMsg = async (userId, msgSendToUserId, msg: string) => {
   }
 };
 
+export const startTalk = async (userId: string) => {
+  try {
+    const user = await UserModel.findOne({ _id: userId });
+
+    const data = {
+      messagesWith: userId,
+      user: {
+        _id: user._id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        __v: user.__v,
+      },
+      lastMessage: null,
+      date: null,
+    };
+
+    return { data };
+  } catch (error) {
+    console.error(error);
+    return { error };
+  }
+};
+
 export const deleteMsg = async (
   userId: string,
   msgSendToUserId: string,

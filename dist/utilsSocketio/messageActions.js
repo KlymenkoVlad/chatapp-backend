@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import ChatModel from "../models/ChatModel.js";
+import UserModel from "../models/UserModel.js";
 export const sendMsg = async (userId, msgSendToUserId, msg) => {
     try {
         const user = await ChatModel.findOne({ user: userId });
@@ -32,6 +33,30 @@ export const sendMsg = async (userId, msgSendToUserId, msg) => {
             await msgSendToUser.save();
         }
         return { newMsg };
+    }
+    catch (error) {
+        console.error(error);
+        return { error };
+    }
+};
+export const startTalk = async (userId) => {
+    try {
+        const user = await UserModel.findOne({ _id: userId });
+        const data = {
+            messagesWith: userId,
+            user: {
+                _id: user._id,
+                name: user.name,
+                username: user.username,
+                email: user.email,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                __v: user.__v,
+            },
+            lastMessage: null,
+            date: null,
+        };
+        return { data };
     }
     catch (error) {
         console.error(error);
