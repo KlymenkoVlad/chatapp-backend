@@ -13,7 +13,7 @@ const ChatSchema = new Schema({
           _id: {
             type: Schema.Types.ObjectId,
             default: mongoose.Types.ObjectId,
-          }, // Automatically generated ID
+          },
 
           msg: { type: String, required: true },
           sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
