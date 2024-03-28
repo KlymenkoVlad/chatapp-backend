@@ -1,12 +1,14 @@
 import express, { Request } from "express";
-const router = express.Router();
 import bcrypt from "bcryptjs";
+
 import authMiddleware from "../middlewares/authMiddleware.js";
 import UserModel from "../models/UserModel.js";
 import { CustomRequest } from "../types/types.js";
 import { validateEmail } from "../utils/validation.js";
 
-//Find all matching users by username
+const router = express.Router();
+
+//*Find all matching users by username
 router.get("/", authMiddleware, async (req: CustomRequest, res: any) => {
   try {
     const { username } = req.query;
@@ -47,7 +49,7 @@ router.get("/", authMiddleware, async (req: CustomRequest, res: any) => {
   }
 });
 
-//Get user by id
+//*Get user by id
 router.get("/:userId", authMiddleware, async (req: Request, res) => {
   try {
     const { userId } = req.params;
@@ -62,7 +64,7 @@ router.get("/:userId", authMiddleware, async (req: Request, res) => {
   }
 });
 
-//Update user profile
+//*Update user profile
 router.put("/", authMiddleware, async (req: CustomRequest, res) => {
   const { userId } = req;
   const { name, lastname, email, username, mainPicture } = req.body;
@@ -123,7 +125,7 @@ router.put("/", authMiddleware, async (req: CustomRequest, res) => {
   }
 });
 
-//Update user password
+//*Update user password
 router.post(
   "/updatePassword",
   authMiddleware,

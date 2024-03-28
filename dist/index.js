@@ -42,6 +42,7 @@ const io = new Server(server, {
         credentials: true,
     },
 });
+//* Add user to list of connected users
 io.on("connection", (socket) => {
     socket.on("join", async ({ userId }) => {
         console.log("join");
@@ -52,6 +53,7 @@ io.on("connection", (socket) => {
             });
         }, 10000);
     });
+    //* Typing event, when user typing thats send to a particular user
     socket.on("typing", (userId, msgSendToUserId) => {
         // Use the findConnectedUser function to get the recipient's socket
         const receiverSocket = findConnectedUser(msgSendToUserId);
@@ -60,17 +62,19 @@ io.on("connection", (socket) => {
             io.to(receiverSocket.socketId).emit("userTyping", userId);
         }
     });
+    //* Stop typing
     socket.on("stopTyping", () => {
         // Broadcast the 'stopTyping' event to all connected clients
-        // console.log("stopTyping");
         socket.broadcast.emit("userStoppedTyping");
     });
+    //* Work on loading messages
     socket.on("loadMessages", async ({ userId, messagesWith }) => {
         const { chat, error } = await loadMessages(userId, messagesWith);
         !error
             ? socket.emit("messagesLoaded", { chat })
             : socket.emit("noChatFound");
     });
+    //* Work on sending message and send to particular user
     socket.on("sendNewMsg", async ({ userId, msgSendToUserId, msg }) => {
         const { newMsg, error } = await sendMsg(userId, msgSendToUserId, msg);
         const receiverSocket = findConnectedUser(msgSendToUserId);
@@ -80,14 +84,13 @@ io.on("connection", (socket) => {
         }
         !error && socket.emit("msgSent", { newMsg });
     });
+    //* Work on deleting message and send id of message that need to be deleted to both users
     socket.on("deleteMsg", async ({ userId, msgSendToUserId, msgId }) => {
         const { error, userMessageIndex } = await deleteMsg(userId, msgSendToUserId, msgId);
         if (error)
             throw new Error(error);
         const receiverSocket = findConnectedUser(msgSendToUserId);
         const senderSocket = findConnectedUser(userId);
-        // console.log(msgSendToUserId, userId);
-        // console.log("warn", receiverSocket, senderSocket);
         if (receiverSocket) {
             // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
             io.to(receiverSocket.socketId).emit("msgDeletedReceived", {
@@ -100,28 +103,13 @@ io.on("connection", (socket) => {
             });
         }
     });
-    socket.on("start-talk", async ({ userIdReceiver, userId }) => {
-        // console.log(data.messagesWith, "data");
-        // console.log(data, "data");
-        const receiverSocket = findConnectedUser(userIdReceiver);
-        const { error, data } = await startTalk(userId);
-        console.log(data);
-        console.log("start-talk");
-        // console.log(receiverSocket.socketId);
-        if (receiverSocket) {
-            console.log("all good");
-            // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
-            io.to(receiverSocket.socketId).emit("newChatAccept", data);
-        }
-    });
+    //* Work on editing message and send to both users edited message
     socket.on("editMsg", async ({ userId, msgSendToUserId, msgId, newMsgText }) => {
         const { error, userMessageIndex } = await editMsg(userId, msgSendToUserId, msgId, newMsgText);
         if (error)
             throw new Error(error);
         const receiverSocket = findConnectedUser(msgSendToUserId);
         const senderSocket = findConnectedUser(userId);
-        // console.log(msgSendToUserId, userId);
-        // console.log("warn", receiverSocket, senderSocket);
         if (receiverSocket) {
             // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
             io.to(receiverSocket.socketId).emit("msgEditedReceived", {
@@ -138,6 +126,16 @@ io.on("connection", (socket) => {
             });
         }
     });
+    //* When user create chat, that send to a particular user the new chat
+    socket.on("start-talk", async ({ userIdReceiver, userId }) => {
+        const receiverSocket = findConnectedUser(userIdReceiver);
+        const { error, data } = await startTalk(userId);
+        if (receiverSocket) {
+            // WHEN YOU WANT TO SEND MESSAGE TO A PARTICULAR SOCKET
+            io.to(receiverSocket.socketId).emit("newChatAccept", data);
+        }
+    });
+    //* When user disconnects, we remove him from the list
     socket.on("userDisconnect", () => removeUser(socket.id));
 });
 app.get("/", (req, res) => {

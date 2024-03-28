@@ -14,9 +14,6 @@ router.post("/", async (req, res) => {
     if (!password) {
         return res.status(401).json({ error: "Please provide a password" });
     }
-    if (!name) {
-        return res.status(401).json({ error: "Please provide a name" });
-    }
     try {
         const emailNotAvailable = await UserModel.findOne({
             email: email.toLowerCase(),

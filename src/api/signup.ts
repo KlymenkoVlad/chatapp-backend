@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+
 import UserModel from "../models/UserModel.js";
 import { validateEmail } from "../utils/validation.js";
 import ChatModel from "../models/ChatModel.js";
@@ -10,15 +11,13 @@ const router = express.Router();
 //Signup
 router.post("/", async (req, res) => {
   const { username, password, email, name, lastname, mainPicture } = req.body;
+
   if (!validateEmail(email)) {
     return res.status(401).json({ error: "Invalid Email" });
   }
 
   if (!password) {
     return res.status(401).json({ error: "Please provide a password" });
-  }
-  if (!name) {
-    return res.status(401).json({ error: "Please provide a name" });
   }
 
   try {

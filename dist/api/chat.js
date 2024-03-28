@@ -1,9 +1,9 @@
+import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import ChatModel from "../models/ChatModel.js";
 import UserModel from "../models/UserModel.js";
-import express from "express";
 const router = express.Router();
-//Get all chats
+//*Get all chats
 router.get("/", authMiddleware, async (req, res) => {
     try {
         const { userId } = req;
@@ -28,7 +28,7 @@ router.get("/", authMiddleware, async (req, res) => {
         return res.status(500).send("Server Error");
     }
 });
-//Create chat
+//*Create chat
 router.post("/", authMiddleware, async (req, res) => {
     const { userId, msgSendToUserId } = req.body;
     try {

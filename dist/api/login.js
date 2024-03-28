@@ -1,10 +1,10 @@
 import express from "express";
-const router = express.Router();
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import UserModel from "../models/UserModel.js";
 import { validateEmail } from "../utils/validation.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
+const router = express.Router();
 //Get user by authorization token
 router.get("/", authMiddleware, async (req, res) => {
     const { userId } = req;

@@ -1,10 +1,10 @@
 import express from "express";
-const router = express.Router();
 import bcrypt from "bcryptjs";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import UserModel from "../models/UserModel.js";
 import { validateEmail } from "../utils/validation.js";
-//Find all matching users by username
+const router = express.Router();
+//*Find all matching users by username
 router.get("/", authMiddleware, async (req, res) => {
     try {
         const { username } = req.query;
@@ -37,7 +37,7 @@ router.get("/", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
-//Get user by id
+//*Get user by id
 router.get("/:userId", authMiddleware, async (req, res) => {
     try {
         const { userId } = req.params;
@@ -52,7 +52,7 @@ router.get("/:userId", authMiddleware, async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 });
-//Update user profile
+//*Update user profile
 router.put("/", authMiddleware, async (req, res) => {
     const { userId } = req;
     const { name, lastname, email, username, mainPicture } = req.body;
@@ -100,7 +100,7 @@ router.put("/", authMiddleware, async (req, res) => {
         res.status(500).json({ error: "Error updating user" });
     }
 });
-//Update user password
+//*Update user password
 router.post("/updatePassword", authMiddleware, async (req, res) => {
     try {
         const { userId } = req;
